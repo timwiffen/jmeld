@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Maven: help:help:UNKNOWN">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/help.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
