@@ -16,14 +16,18 @@
  */
 package org.jmeld.ui;
 
+import org.jdesktop.swingworker.*;
+import org.jmeld.JMeldException;
 import org.jmeld.diff.*;
 import org.jmeld.settings.JMeldSettings;
+import org.jmeld.ui.action.ActionHandler;
 import org.jmeld.ui.search.*;
 import org.jmeld.ui.swing.*;
 import org.jmeld.ui.text.*;
 import org.jmeld.ui.util.*;
 import org.jmeld.util.*;
 import org.jmeld.util.conf.*;
+import org.jmeld.util.node.FileNode;
 import org.jmeld.util.prefs.*;
 
 import javax.swing.*;
@@ -42,7 +46,11 @@ public class FilePanel
   // Class variables:
   private static final int MAXSIZE_CHANGE_DIFF = 1000;
 
+  // All actions:
+  private static final String LOAD_FILE_ACTION             = "LoadFile";
+
   // Instance variables:
+  private ActionHandler actionHandler;
   private BufferDiffPanel diffPanel;
   private String name;
   private int position;
@@ -57,6 +65,8 @@ public class FilePanel
   private boolean selected;
   private FilePanelBar filePanelBar;
 
+  Action actionEnterKey;
+
   FilePanel(BufferDiffPanel diffPanel, String name, int position)
   {
     this.diffPanel = diffPanel;
@@ -69,6 +79,8 @@ public class FilePanel
   private void init()
   {
     ImageIcon icon;
+
+    actionHandler = new ActionHandler();
 
     editor = new JTextArea();
     editor.setDragEnabled(true);
@@ -109,8 +121,19 @@ public class FilePanel
     timer = new Timer(100, refresh());
     timer.setRepeats(false);
 
+    initActions();
+
     initConfiguration();
     getConfiguration().addConfigurationListener(this);
+  }
+
+  private void initActions()
+  {
+    actionEnterKey = actionHandler.createAction(this, LOAD_FILE_ACTION);
+    KeyStroke keyStroke = KeyStroke.getKeyStroke("ENTER");
+    InputMap im = fileLabel.getInputMap();
+    fileLabel.getActionMap().put(im.get(keyStroke), actionEnterKey);
+
   }
 
   FilePanelBar getFilePanelBar()
@@ -680,5 +703,53 @@ public class FilePanel
   public String getSelectedText()
   {
     return editor.getSelectedText();
+  }
+
+  class RefreshAction
+      extends org.jdesktop.swingworker.SwingWorker<String, Object>
+  {
+    FileNode fileNode;
+    FileDocument fileDocument;
+
+    RefreshAction()
+    {
+    }
+
+    @Override
+    public String doInBackground()
+    {
+
+      File newFile = new File(fileLabel.getText());
+      SimpleAttributeSet set = new SimpleAttributeSet();
+      if(newFile.isFile()) {
+        StyleConstants.setForeground(set, Color.BLACK);
+        fileNode = new FileNode(fileLabel.getText(), newFile);
+        fileDocument = fileNode.getDocument();
+        try {
+          fileDocument.read();
+        } catch (JMeldException e) {
+          e.printStackTrace();
+        }
+        setBufferDocument(fileDocument);
+        diffPanel.doRefresh();
+      } else {
+
+        StyleConstants.setForeground(set, Color.RED);
+        //StyleConstants.setBackground(set, Color.BLACK);
+      }
+      ((StyledDocument) fileLabel.getDocument()).setCharacterAttributes(0, fileLabel.getDocument().getLength(), set, false);
+
+      return null;
+    }
+
+    @Override
+    protected void done()
+    {
+
+    }
+  }
+
+  public void doLoadFile(ActionEvent ae) {
+    new RefreshAction().execute();
   }
 }
