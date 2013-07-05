@@ -108,8 +108,12 @@ public class DiffLabel
       ex.printStackTrace();
 
       // Make the best out of this situation. (Should never happen)
-      setText(text);
+      super.setText(text);
     }
+  }
+
+  public void updateText(String newText) {
+    setText(newText, otherText);
   }
 
   class DiffLabelListener implements DocumentListener {
@@ -153,7 +157,7 @@ public class DiffLabel
         return null;
       int selectionStart = getText().length();
       int selectionEnd = fileName.length();
-      setText(fileName, otherText);
+      updateText(fileName);
       setCaretPosition(selectionStart);
       moveCaretPosition(selectionEnd);
 

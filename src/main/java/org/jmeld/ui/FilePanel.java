@@ -37,6 +37,10 @@ import javax.swing.event.*;
 import javax.swing.text.*;
 
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.*;
 import java.io.*;
 
@@ -88,6 +92,8 @@ public class FilePanel
 
     editor.addFocusListener(getFocusListener());
     editor.addCaretListener(getCaretListener());
+
+    editor.setDropTarget(getDropTarget());
 
     scrollPane = new JScrollPane(editor);
     scrollPane.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
@@ -606,6 +612,30 @@ public class FilePanel
       public void actionPerformed(ActionEvent ae)
       {
         diffPanel.diff();
+      }
+    };
+  }
+
+  /**
+   * Provides a <code>DropTarget</code> that will load any file dropped on it
+   * into the panel and then refresh the diff
+   */
+  public DropTarget getDropTarget() {
+    return new DropTarget() {
+      public synchronized void drop(DropTargetDropEvent evt) {
+        try {
+          evt.acceptDrop(DnDConstants.ACTION_COPY);
+          @SuppressWarnings("unchecked")
+          java.util.List<File> droppedFiles = (java.util.List<File>) evt
+              .getTransferable().getTransferData(
+                  DataFlavor.javaFileListFlavor);
+          if(droppedFiles != null && droppedFiles.size() != 0) {
+            fileLabel.updateText(droppedFiles.get(0).getAbsolutePath());
+            new RefreshAction().execute();
+          }
+        } catch (Exception ex) {
+          ex.printStackTrace();
+        }
       }
     };
   }
