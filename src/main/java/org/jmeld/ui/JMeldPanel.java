@@ -46,6 +46,12 @@ import java.net.*;
 import java.util.*;
 import java.util.List;
 
+/**
+ * This is the main panel containing the buttons New etc
+ *
+ * All actions are managed by an <code>ActionHandler</code> with looks for a method with the name
+ * <code>doAction()</code> where <code>Action</code> is the name of the action.
+ */
 public class JMeldPanel
     extends JPanel
     implements ConfigurationListenerIF
